@@ -1,82 +1,131 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محول النص إلى كلام</title>
+    <title>محول النص إلى كلام البسيط</title>
     <style>
-        /* نفس الأنماط السابقة */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
         body {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .container {
+            font-family: Arial, sans-serif;
             max-width: 800px;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            margin-top: 20px;
-        }
-        
-        .warning {
-            background: #ff9800;
-            color: #000;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            margin: 50px auto;
+            padding: 20px;
             text-align: center;
+            background: #f0f2f5;
         }
-        
-        /* باقي الأنماط مثل السابق */
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #stopBtn {
+            background: #f44336;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>محول النص إلى كلام</h1>
-    
     <div class="container">
-        <div id="browserWarning" class="warning" style="display: none;">
-            <strong>ملاحظة:</strong> قد لا يدعم متصفحك هذه الميزة بشكل كامل. 
-            يرجى استخدام Chrome, Edge, أو Safari للإمكانيات الكاملة.
-        </div>
+        <h1>🎤 محول النص إلى كلام 🎤</h1>
+        <p>هذا المحول يعمل على جميع المتصفحات</p>
         
-        <!-- باقي المحتوى مثل السابق -->
+        <textarea id="textInput">مرحبا! هذا اختبار لمحول النص إلى كلام</textarea>
+        <br>
+        
+        <button onclick="speakText()" id="speakBtn">تشغيل الصوت</button>
+        <button onclick="stopSpeak()" id="stopBtn">إيقاف الصوت</button>
+        
+        <div id="status" class="status">جاهز للاستخدام</div>
+        
+        <div style="margin-top: 20px; font-size: 14px; color: #666;">
+            <p>إذا لم يعمل الصوت، تأكد من:</p>
+            <p>1. رفع مستوى الصوت في جهازك</p>
+            <p>2. استخدام متصفح Chrome أو Edge</p>
+            <p>3. السماح للموقع باستخدام الصوت</p>
+        </div>
     </div>
 
     <script>
-        // فحص دعم المتصفح
-        function checkBrowserSupport() {
-            if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
-                document.getElementById('browserWarning').style.display = 'block';
-                return false;
+        function speakText() {
+            const text = document.getElementById('textInput').value;
+            const status = document.getElementById('status');
+            const speakBtn = document.getElementById('speakBtn');
+            
+            if (!text.trim()) {
+                status.textContent = 'يرجى إدخال نص أولاً';
+                return;
             }
-            return true;
+            
+            status.textContent = 'جاري التشغيل...';
+            speakBtn.disabled = true;
+            
+            // محاولة استخدام Web Speech API أولاً
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.8;
+                
+                utterance.onend = function() {
+                    status.textContent = 'تم الانتهاء من التشغيل';
+                    speakBtn.disabled = false;
+                };
+                
+                utterance.onerror = function() {
+                    status.textContent = 'حدث خطأ، جرب طريقة بديلة';
+                    // تجربة اللغة الإنجليزية إذا فشلت العربية
+                    utterance.lang = 'en-US';
+                    speechSynthesis.speak(utterance);
+                };
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                status.textContent = 'المتصفح لا يدعم تحويل النص إلى كلام';
+                speakBtn.disabled = false;
+            }
         }
         
-        // تهيئة التطبيق فقط إذا كان المدعوم
-        if (checkBrowserSupport()) {
-            // استخدام كود Web Speech API الأصلي هنا
-            const speech = new SpeechSynthesisUtterance();
-            // ... باقي الكود
-        } else {
-            // استخدام الحل البديل بالمكتبة
-            // ... كود المكتبة البديلة
+        function stopSpeak() {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+            }
+            document.getElementById('status').textContent = 'تم الإيقاف';
+            document.getElementById('speakBtn').disabled = false;
         }
+        
+        // إيقاف الصوت عند مغادرة الصفحة
+        window.addEventListener('beforeunload', function() {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+            }
+        });
     </script>
 </body>
 </html>
